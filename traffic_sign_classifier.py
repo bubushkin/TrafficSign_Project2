@@ -144,13 +144,14 @@ print("Number of classes =", n_classes)
 learning_rate = 0.001;
 
 X_train_norm = np.zeros(shape=(X_train.shape[0], X_train.shape[1], X_train.shape[2], 3), dtype=np.float32);
-#X_train_norm2 = np.zeros(shape=(X_train.shape[0], X_train.shape[1], X_train.shape[2], 3), dtype=np.float32);
+X_valid_norm = np.zeros(shape=(X_valid.shape[0], X_valid.shape[1], X_valid.shape[2], 3), dtype=np.float32);
+X_test_norm = np.zeros(shape=(X_test.shape[0], X_test.shape[1], X_test.shape[2], 3), dtype=np.float32);
 
-index = random.randint(0, len(X_train));
-image = X_train[index].squeeze();
-
-plt.imshow(image);
-print(y_train[index]);
+# index = random.randint(0, len(X_train));
+# image = X_train[index].squeeze();
+# 
+# plt.imshow(image);
+# print(y_train[index]);
 
 
 for idx, img in enumerate(X_train):
@@ -162,9 +163,15 @@ for idx, img in enumerate(X_train):
 for idx, val in enumerate(X_train):
     X_train_norm[idx] = cv2.normalize(val, X_train_norm[idx], alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F);
 
-image = X_train_norm[index].squeeze();
+for idx, val in enumerate(X_valid):
+    X_valid_norm[idx] = cv2.normalize(val, X_valid_norm[idx], alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F);
 
-plt.imshow(image);
+for idx, val in enumerate(X_test):
+    X_test_norm[idx] = cv2.normalize(val, X_test_norm[idx], alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F);
+
+# image = X_train_norm[index].squeeze();
+# 
+# plt.imshow(image);
 
 classifier = Classifier(x);
 
@@ -177,7 +184,6 @@ training_operation = optimizer.minimize(loss_operation);
 correct_prediction = tf.equal(tf.argmax(classifier, 1), tf.argmax(one_hot_y, 1))
 accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 saver = tf.train.Saver()
-
 
 def evaluate(X_data, y_data):
     num_examples = len(X_data)
@@ -203,7 +209,11 @@ with tf.Session() as sess:
             batch_x, batch_y = X_train_sub[offset:end], y_train_sub[offset:end]
             sess.run(training_operation, feed_dict={x: batch_x, y: batch_y, keep_prob: 0.5})
             
-        validation_accuracy = evaluate(X_valid, y_valid)
+        validation_accuracy = evaluate(X_valid_norm, y_valid)
         print("EPOCH {} ...".format(i+1))
         print("Validation Accuracy = {:.3f}".format(validation_accuracy))
         print()    
+
+    test_accuracy = evaluate(X_test_norm, y_test)
+    print("Test Accuracy = {:.3f}".format(test_accuracy))
+
